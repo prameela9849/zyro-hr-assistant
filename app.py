@@ -16,7 +16,11 @@ from langchain_core.runnables import RunnablePassthrough
 # -------------------------------
 
 import os
-groq_key = os.getenv("gsk_fMbDqdiwiSofTUr76IcGWGdyb3FYBKMgTkU8vWhwbHbqVLpGsO5")
+groq_key = os.getenv("GROQ_API_KEY")
+st.write("Groq key exists:", groq_key is not None)
+
+if groq_key:
+    st.write("Key starts with:", groq_key[:10])
 
 # -------------------------------
 # STREAMLIT TITLE
