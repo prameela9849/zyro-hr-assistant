@@ -134,7 +134,7 @@ Question:
 Answer:
 """
 
-    prompt = PromptTemplate(
+prompt = PromptTemplate(
         template=template,
         input_variables=["context", "question"]
     )
