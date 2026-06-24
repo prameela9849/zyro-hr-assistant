@@ -140,7 +140,7 @@ prompt = PromptTemplate(
     )
 
     # Format Documents
-    def format_docs(docs):
+def format_docs(docs):
         return "\n\n".join(
             doc.page_content for doc in docs
         )
@@ -162,7 +162,7 @@ prompt = PromptTemplate(
     return "\n\n".join(formatted)
 
     # RAG Chain
-    rag_chain = (
+rag_chain = (
     {
         "context": retriever | format_docs_with_sources,
         "question": RunnablePassthrough()
