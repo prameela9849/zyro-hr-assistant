@@ -58,58 +58,44 @@ except Exception as e:
 @st.cache_resource
 def build_rag():
 
-    # Load PDFs
+# Load PDFs
     docs = []
 
     for pdf in glob.glob("*.pdf"):
         loader = PyPDFLoader(pdf)
         docs.extend(loader.load())
 
-    # Split documents
+# Split documents
     splitter = RecursiveCharacterTextSplitter(
-    chunk_size=500,
-    chunk_overlap=100,
-    separators=[
-        "\n\n",
-        "\n",
-        ". ",
-        " ",
-        ""
-    ]
-)
+        chunk_size=500,
+        chunk_overlap=100,
+        separators=["\n\n", "\n", ". ", " ", ""]
+    )
 
-    chunks = splitter.split_documents(docs)
+chunks = splitter.split_documents(docs)
 
-    # Embeddings
+# Embeddings
     embeddings = HuggingFaceEmbeddings(
-    model_name="BAAI/bge-base-en-v1.5",
-    model_kwargs={"device": "cpu"},
-    encode_kwargs={"normalize_embeddings": True}
-)
+        model_name="BAAI/bge-base-en-v1.5",
+        model_kwargs={"device": "cpu"},
+        encode_kwargs={"normalize_embeddings": True}
+    )
+# Vector Store
+    vectorstore = FAISS.from_documents(chunks, embeddings)
 
- # Vector Store
-vectorstore = FAISS.from_documents(
-    chunks,
-    embeddings
-)
+    # Retriever
+    retriever = vectorstore.as_retriever(
+        search_type="mmr",
+        search_kwargs={"k": 6, "fetch_k": 25}
+    )
 
-# Retriever
-retriever = vectorstore.as_retriever(
-    search_type="mmr",
-    search_kwargs={
-        "k": 6,
-        "fetch_k": 25
-    }
-)
-
-# LLM
-llm = ChatGroq(
+ # LLM
+    llm = ChatGroq(
         model="llama-3.3-70b-versatile",
         api_key=groq_key,
         temperature=0
-    )    
-
-    # Prompt
+    )
+# Prompt
 template = """
 You are the Zyro Dynamics HR Assistant.
 
@@ -138,27 +124,15 @@ prompt = PromptTemplate(
         template=template,
         input_variables=["context", "question"]
     )
+    # Format docs
+    def format_docs_with_sources(docs):
+        formatted = []
+        for doc in docs:
+            source = doc.metadata.get("source", "Unknown")
+            formatted.append(f"[SOURCE: {source}]\n{doc.page_content}")
+        return "\n\n".join(formatted)
 
-    # Format Documents
-def format_docs_with_sources(docs):
-
-    formatted = []
-
-    for doc in docs:
-
-        source = doc.metadata.get(
-            "source",
-            "Unknown"
-        )
-
-        formatted.append(
-            f"[SOURCE: {source}]\n{doc.page_content}"
-        )
-
-    return "\n\n".join(formatted)
-
-    # RAG Chain
-def build_rag_chain():
+# RAG Chain
     rag_chain = (
         {
             "context": retriever | format_docs_with_sources,
