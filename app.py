@@ -146,7 +146,7 @@ def format_docs(docs):
         )
         def format_docs_with_sources(docs):
 
-    formatted = []
+formatted = []
 
     for doc in docs:
 
