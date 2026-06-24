@@ -75,13 +75,13 @@ def build_rag():
 chunks = splitter.split_documents(docs)
 
 # Embeddings
-    embeddings = HuggingFaceEmbeddings(
+embeddings = HuggingFaceEmbeddings(
         model_name="BAAI/bge-base-en-v1.5",
         model_kwargs={"device": "cpu"},
         encode_kwargs={"normalize_embeddings": True}
     )
 # Vector Store
-    vectorstore = FAISS.from_documents(chunks, embeddings)
+vectorstore = FAISS.from_documents(chunks, embeddings)
 
     # Retriever
     retriever = vectorstore.as_retriever(
@@ -90,7 +90,7 @@ chunks = splitter.split_documents(docs)
     )
 
  # LLM
-    llm = ChatGroq(
+llm = ChatGroq(
         model="llama-3.3-70b-versatile",
         api_key=groq_key,
         temperature=0
@@ -133,7 +133,7 @@ prompt = PromptTemplate(
         return "\n\n".join(formatted)
 
 # RAG Chain
-    rag_chain = (
+rag_chain = (
         {
             "context": retriever | format_docs_with_sources,
             "question": RunnablePassthrough()
