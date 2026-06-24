@@ -67,16 +67,25 @@ def build_rag():
 
     # Split documents
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=800,
-        chunk_overlap=150
-    )
+    chunk_size=500,
+    chunk_overlap=100,
+    separators=[
+        "\n\n",
+        "\n",
+        ". ",
+        " ",
+        ""
+    ]
+)
 
     chunks = splitter.split_documents(docs)
 
     # Embeddings
     embeddings = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
-    )
+    model_name="BAAI/bge-base-en-v1.5",
+    model_kwargs={"device": "cpu"},
+    encode_kwargs={"normalize_embeddings": True}
+)
 
     # Vector Store
     vectorstore = FAISS.from_documents(
@@ -85,13 +94,14 @@ def build_rag():
     )
 
     # Retriever
-    retriever = vectorstore.as_retriever(
-        search_type="mmr",
-        search_kwargs={
-            "k": 6,
-            "fetch_k": 25
-        }
-    )
+   retriever = vectorstore.as_retriever(
+    search_type="mmr",
+    search_kwargs={
+        "k": 8,
+        "fetch_k": 30,
+        "lambda_mult": 0.7
+    }
+)
 
     # LLM
     llm = ChatGroq(
@@ -104,13 +114,17 @@ def build_rag():
     template = """
 You are the Zyro Dynamics HR Assistant.
 
-Answer ONLY using the provided HR policy documents.
+Use ONLY the information present in the context.
 
-If the answer exists in the context, answer clearly and concisely.
-
-If the answer is NOT found in the context OR the question is unrelated to HR policies, reply EXACTLY:
+Rules:
+1. If the answer is clearly present in the context, answer directly.
+2. If the context does not contain enough information, respond EXACTLY:
 
 I can only answer HR-related questions from Zyro Dynamics policy documents.
+
+3. Do not use outside knowledge.
+4. Do not guess.
+5. Mention policy details exactly as written.
 
 Context:
 {context}
@@ -131,25 +145,40 @@ Answer:
         return "\n\n".join(
             doc.page_content for doc in docs
         )
+        def format_docs_with_sources(docs):
+
+    formatted = []
+
+    for doc in docs:
+
+        source = doc.metadata.get(
+            "source",
+            "Unknown"
+        )
+
+        formatted.append(
+            f"[SOURCE: {source}]\n{doc.page_content}"
+        )
+
+    return "\n\n".join(formatted)
 
     # RAG Chain
     rag_chain = (
-        {
-            "context": retriever | format_docs,
-            "question": RunnablePassthrough()
-        }
-        | prompt
-        | llm
-        | StrOutputParser()
-    )
+    {
+        "context": retriever | format_docs_with_sources,
+        "question": RunnablePassthrough()
+    }
+    | prompt
+    | llm
+    | StrOutputParser()
+)
 
-    return rag_chain, retriever, len(docs)
+    return rag_chain, retriever, vectorstore, len(docs)
 
 # --------------------------------
 # INITIALIZE
 # --------------------------------
-
-rag_chain, retriever, num_docs = build_rag()
+rag_chain, retriever, vectorstore, num_docs = build_rag()
 
 st.write(f"📄 Number of document pages loaded: {num_docs}")
 
@@ -160,6 +189,32 @@ st.write(f"📄 Number of document pages loaded: {num_docs}")
 question = st.text_input(
     "Ask an HR question:"
 )
+REFUSAL = (
+    "I can only answer HR-related questions "
+    "from Zyro Dynamics policy documents."
+)
+
+def answer_question(question):
+
+    docs_scores = vectorstore.similarity_search_with_score(
+        question,
+        k=5
+    )
+
+    best_score = docs_scores[0][1]
+
+    if best_score > 1.2:
+        return REFUSAL
+
+    answer = rag_chain.invoke(question)
+
+    if (
+        "not found" in answer.lower()
+        or len(answer.strip()) < 20
+    ):
+        return REFUSAL
+
+    return answer
 
 if question:
 
@@ -172,7 +227,7 @@ if question:
             st.write(doc.page_content[:500])
 
     # Generate Answer
-    answer = rag_chain.invoke(question)
+    answer = answer_question(question)
 
     st.subheader("Answer")
     st.write(answer)
