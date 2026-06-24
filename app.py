@@ -110,7 +110,7 @@ llm = ChatGroq(
     )    
 
     # Prompt
-    template = """
+template = """
 You are the Zyro Dynamics HR Assistant.
 
 Use ONLY the information present in the context.
