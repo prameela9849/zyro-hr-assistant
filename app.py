@@ -142,7 +142,7 @@ rag_chain = (
         | StrOutputParser()
     )
 
-    return rag_chain, retriever, vectorstore, len(docs)
+return rag_chain, retriever, vectorstore, len(docs)
 
 # --------------------------------
 # INITIALIZE
