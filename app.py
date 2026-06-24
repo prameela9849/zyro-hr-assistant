@@ -87,19 +87,18 @@ def build_rag():
     encode_kwargs={"normalize_embeddings": True}
 )
 
-    # Vector Store
-    vectorstore = FAISS.from_documents(
-        chunks,
-        embeddings
-    )
+ # Vector Store
+vectorstore = FAISS.from_documents(
+    chunks,
+    embeddings
+)
 
-    # Retriever
-   retriever = vectorstore.as_retriever(
+# Retriever
+retriever = vectorstore.as_retriever(
     search_type="mmr",
     search_kwargs={
-        "k": 8,
-        "fetch_k": 30,
-        "lambda_mult": 0.7
+        "k": 6,
+        "fetch_k": 25
     }
 )
 
