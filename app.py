@@ -123,8 +123,8 @@ prompt = PromptTemplate(
         template=template,
         input_variables=["context", "question"]
     )
-    # Format docs
-    def format_docs_with_sources(docs):
+# Format docs
+def format_docs_with_sources(docs):
         formatted = []
         for doc in docs:
             source = doc.metadata.get("source", "Unknown")
