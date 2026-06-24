@@ -140,13 +140,9 @@ prompt = PromptTemplate(
     )
 
     # Format Documents
-def format_docs(docs):
-        return "\n\n".join(
-            doc.page_content for doc in docs
-        )
-        def format_docs_with_sources(docs):
+def format_docs_with_sources(docs):
 
-formatted = []
+    formatted = []
 
     for doc in docs:
 
