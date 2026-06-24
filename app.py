@@ -84,11 +84,10 @@ embeddings = HuggingFaceEmbeddings(
 vectorstore = FAISS.from_documents(chunks, embeddings)
 
     # Retriever
-    retriever = vectorstore.as_retriever(
+retriever = vectorstore.as_retriever(
         search_type="mmr",
         search_kwargs={"k": 6, "fetch_k": 25}
     )
-
  # LLM
 llm = ChatGroq(
         model="llama-3.3-70b-versatile",
