@@ -102,12 +102,12 @@ retriever = vectorstore.as_retriever(
     }
 )
 
-    # LLM
-    llm = ChatGroq(
+# LLM
+llm = ChatGroq(
         model="llama-3.3-70b-versatile",
         api_key=groq_key,
         temperature=0
-    )
+    )    
 
     # Prompt
     template = """
