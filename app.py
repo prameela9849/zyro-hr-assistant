@@ -158,17 +158,18 @@ def format_docs_with_sources(docs):
     return "\n\n".join(formatted)
 
     # RAG Chain
-rag_chain = (
-    {
-        "context": retriever | format_docs_with_sources,
-        "question": RunnablePassthrough()
-    }
-    | prompt
-    | llm
-    | StrOutputParser()
-)
+def build_rag_chain():
+    rag_chain = (
+        {
+            "context": retriever | format_docs_with_sources,
+            "question": RunnablePassthrough()
+        }
+        | prompt
+        | llm
+        | StrOutputParser()
+    )
 
-return rag_chain, retriever, vectorstore, len(docs)
+    return rag_chain, retriever, vectorstore, len(docs)
 
 # --------------------------------
 # INITIALIZE
