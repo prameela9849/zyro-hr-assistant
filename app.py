@@ -78,8 +78,12 @@ def build_rag():
     # Retriever
     retriever = vectorstore.as_retriever(
         search_type="mmr",
-        search_kwargs={"k": 6, "fetch_k": 25}
-    )
+        search_kwargs={
+            "k": 8,
+            "fetch_k": 30,
+            "lambda_mult": 0.7
+        }
+   )
 
     # LLM
     llm = ChatGroq(
